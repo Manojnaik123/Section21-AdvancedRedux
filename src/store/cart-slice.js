@@ -1,4 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
+import { uiActions } from '../store/ui-slice';
 
 
 const cartSlice = createSlice({
@@ -38,6 +39,51 @@ const cartSlice = createSlice({
         }
     }
 });
+
+
+// unlike the typical actionCrators this dosent return actions but it returns a function 
+export function sendCartData(cart) {
+    return async (dispatch) => {
+        dispatch(
+            uiActions.showNotification({
+                status: 'pending',
+                title: 'Sending...',
+                message: 'Sending cart data!'
+            })
+        );
+
+        async function sendRequest() {
+            const response = await fetch('https://first-project-33326-default-rtdb.firebaseio.com/cart.json', {
+                method: 'PUT',
+                body: JSON.stringify(cart),
+            });
+
+            if (!response.ok) {
+                throw new Error('Sending cart data failed.');
+            }
+        }
+
+        try {
+            await sendRequest();
+            dispatch(
+                uiActions.showNotification({
+                    status: 'success',
+                    title: 'success...',
+                    message: 'success in Sending cart data!'
+                })
+            );
+        } catch (error) {
+
+            sendCartData().catch(error => {  // the sendCartData sends a promise so we can catch it. 
+                uiActions.showNotification({
+                    status: 'Failed',
+                    title: 'Failed',
+                    message: 'Failed in Sending cart data!'
+                })
+            })
+        }
+    }
+}
 
 export const cartActions = cartSlice.actions;
 export default cartSlice;
